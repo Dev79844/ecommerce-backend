@@ -11,12 +11,17 @@ app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
 app.use(cookieParser())
-app.use(fileUpload())
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: "/tmp/"
+}))
 
 app.use(morgan("tiny"))
 
 const home = require('./routes/home')
+const user = require('./routes/user')
 
 app.use("/api/v1",home)
+app.use("/api/v1",user)
 
 module.exports = app

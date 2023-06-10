@@ -1,9 +1,9 @@
-const user = require('../models/user')
-const User = require('../models/user')
+const User = require('../models/User')
 const cookieToken = require('../utils/cookieToken')
 const CustomError = require('../utils/customError')
 const mailHelper = require('../utils/emailHelper')
 const cloudinary = require('cloudinary').v2
+const crypto = require('crypto')
 
 exports.signup = async(req,res,next) => {
     const {name,email,password} = req.body
@@ -77,15 +77,12 @@ exports.forgotPassword = async(req,res,next) => {
     
     const user = await User.findOne({email})
 
-    if(!user){
-        return next(new CustomError("User not found",400))
-    }
-
     const forgotToken = user.getForgotPasswordToken()
+    // console.log(forgotToken);
 
     await user.save({validateBeforeSave:false})
 
-    const uri = `${req.protocol}://${req.get("host")}/password/reset/${forgotToken}`
+    const uri = `${req.protocol}://${req.get("host")}/api/v1/password/reset/${forgotToken}`
 
     const message = `Copy paste this uri and click enter \n\n ${uri}`
 
@@ -105,5 +102,41 @@ exports.forgotPassword = async(req,res,next) => {
         user.forgotPasswordExpiry = undefined
         await user.save({validateBeforeSave: false})
         return next(new CustomError(error.message, 500))
+    }
+}
+
+exports.passwordReset = async(req,res,next) => {
+    try {
+        const token = req.params.token 
+
+        // console.log(token);
+
+        const enctoken = crypto.createHash('sha256').update(token).digest('hex')
+
+        console.log(enctoken);
+
+        const user = await User.findOne({
+            forgotPasswordToken: enctoken
+        })
+
+        console.log(user);
+
+        if(!user){
+            // return next(new Error("Token invalid"))
+            return next(new Error("Token invalid"))
+        }
+
+        if(req.body.password !== req.body.confPassword){
+            return next(new CustomError("Passwords do not match",400))
+        }
+
+        user.password = req.body.password
+        user.forgotPasswordToken = undefined
+        user.forgotPasswordExpiry = undefined 
+        await user.save()
+
+        cookieToken(user,res)
+    } catch (error) {
+        console.log(error);
     }
 }

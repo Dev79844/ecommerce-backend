@@ -2,6 +2,7 @@ const user = require('../models/user')
 const User = require('../models/user')
 const cookieToken = require('../utils/cookieToken')
 const CustomError = require('../utils/customError')
+const mailHelper = require('../utils/emailHelper')
 const cloudinary = require('cloudinary').v2
 
 exports.signup = async(req,res,next) => {
@@ -59,3 +60,50 @@ exports.login = async(req,res,next) => {
     cookieToken(user,res)
 }
 
+exports.logout = async(req,res) => {
+    res.cookie('token', null,{
+        expires: new Date(Date.now()),
+        httpOnly:true
+    })
+
+    res.status(200).json({
+        success: true,
+        message:"Logout successful"
+    })
+}
+
+exports.forgotPassword = async(req,res,next) => {
+    const {email} = req.body 
+    
+    const user = await User.findOne({email})
+
+    if(!user){
+        return next(new CustomError("User not found",400))
+    }
+
+    const forgotToken = user.getForgotPasswordToken()
+
+    await user.save({validateBeforeSave:false})
+
+    const uri = `${req.protocol}://${req.get("host")}/password/reset/${forgotToken}`
+
+    const message = `Copy paste this uri and click enter \n\n ${uri}`
+
+    try {
+        await mailHelper({
+            email: user.email,
+            subject: "Password reset email",
+            message
+        })
+
+        res.status(200).json({
+            success:true,
+            message:"Email sent successfully"
+        })
+    } catch (error) {
+        user.forgotPasswordToken = undefined 
+        user.forgotPasswordExpiry = undefined
+        await user.save({validateBeforeSave: false})
+        return next(new CustomError(error.message, 500))
+    }
+}

@@ -36,3 +36,26 @@ exports.signup = async(req,res,next) => {
 
     cookieToken(user,res)
 }
+
+exports.login = async(req,res,next) => {
+    const {email,password} = req.body 
+
+    if(!email || !password){
+        return next(new CustomError("Please provide email and password",400))
+    }
+
+    const user = await User.findOne({email})
+
+    if(!user){
+        return next(new CustomError("Email or password does not match or exist",400))
+    }
+
+    const isPasswordCorrect = user.isValidatedPassword(password)
+
+    if(!isPasswordCorrect){
+        return next(new CustomError("Email or password does not match or exist",400))
+    }
+
+    cookieToken(user,res)
+}
+

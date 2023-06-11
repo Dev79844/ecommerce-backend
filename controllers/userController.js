@@ -232,3 +232,73 @@ exports.adminAllUsers = async(req,res,next) => {
         throw error
     }
 }
+
+exports.adminGetSingleUser = async(req,res,next) => {
+    try {
+        const userId = req.params.id 
+
+        const user = await User.findById(userId)
+
+        if(!user){
+            return next(new CustomError("No user found",400))
+        }
+
+        res.status(200).json({
+            success: true,
+            user
+        })
+    } catch (error) {
+        throw error
+    }
+}
+
+exports.adminUpdateSingleUser = async(req,res,next) => {
+    try{
+
+        const newData = {
+            name: req.body.name,
+            email: req.body.email,
+            role: req.body.role
+        }
+        
+        const user = await User.findByIdAndUpdate(req.user.id, newData, {
+            new: true,
+            runValidators: true,
+            useFindAndModify: false
+        })
+
+        res.status(200).json({
+            success: true,
+            user
+        })
+
+
+    }catch(error){
+        throw error
+    }
+}
+
+exports.adminDeleteAUser = async(req,res,next) => {
+    try {
+        await User.findByIdAndDelete(req.params.id)
+
+        res.status(200).json({
+            success: true,
+            message:"User deleted"
+        })
+    } catch (error) {
+        throw error
+    }
+}
+
+exports.managerAllUsers = async(req,res,next) => {
+    try {
+        const users = (await User.find({role: 'user'}, '-password -__v'))
+        res.status(200).json({
+            success: true,
+            users
+        })
+    } catch (error) {
+        throw error
+    }
+}

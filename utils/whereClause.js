@@ -16,6 +16,22 @@ class Whereclause{
         return this
     }
 
+    filter(){
+        const copyQ = {...this.bigQ}
+
+        delete copyQ["search"]
+        delete copyQ["limit"]
+        delete copyQ["page"]
+
+        let str = JSON.stringify(copyQ)
+
+        str = str.replace(/\b(gte|lte|gt|lt)\b/g, m=> `$${m}`)
+
+        jsonOfCopyQ = JSON.parse(str)
+
+        this.base = this.base.find(jsonOfCopyQ)
+    }
+
     pager(resultperpage){
         let currentPage=1
         if(this.bigQ.page){
@@ -28,3 +44,5 @@ class Whereclause{
         return this
     }
 }
+
+module.exports = Whereclause

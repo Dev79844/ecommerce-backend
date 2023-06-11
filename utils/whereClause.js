@@ -27,9 +27,10 @@ class Whereclause{
 
         str = str.replace(/\b(gte|lte|gt|lt)\b/g, m=> `$${m}`)
 
-        jsonOfCopyQ = JSON.parse(str)
+        let jsonOfCopyQ = JSON.parse(str)
 
         this.base = this.base.find(jsonOfCopyQ)
+        return this
     }
 
     pager(resultperpage){

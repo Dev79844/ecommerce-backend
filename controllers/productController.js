@@ -1,6 +1,7 @@
 const Product = require('../models/product')
 const cloudinary = require('cloudinary').v2
 const CustomError = require('../utils/customError')
+const WhereClause = require('../utils/whereClause')
 
 exports.addProduct = async(req,res,next) => {
     try {
@@ -31,6 +32,33 @@ exports.addProduct = async(req,res,next) => {
         res.status(200).json({
             success:true,
             product
+        })
+
+    } catch (error) {
+        throw error
+    }
+}
+
+exports.getAllProducts = async(req,res,next) => {
+    try {
+        const resultperpage = 6
+        const totalProducts = await Product.countDocuments()
+
+        const productsObj = new WhereClause(Product.find(),req.query).search().filter()
+
+        let products = await productsObj.base
+
+        const filteredProductcount = products.length
+
+        productsObj.pager(resultperpage)
+
+        products = await productsObj.base.clone()
+
+        res.status(200).json({
+            success: true,
+            products,
+            filteredProductcount,
+            totalProducts
         })
 
     } catch (error) {

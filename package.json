@@ -6,7 +6,7 @@
   "module": "CommonJS",
   "scripts": {
     "start": "node index.js",
-    "dev":"nodemon index.js"
+    "dev": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.2.3",
     "morgan": "^1.10.0",
+    "nanoid": "^4.0.2",
     "nodemailer": "^6.9.3",
     "razorpay": "^2.8.6",
     "stripe": "^12.9.0",

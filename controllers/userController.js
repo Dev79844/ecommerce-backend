@@ -280,10 +280,18 @@ exports.adminUpdateSingleUser = async(req,res,next) => {
 
 exports.adminDeleteAUser = async(req,res,next) => {
     try {
-        await User.findByIdAndDelete(req.params.id)
+        const user = await User.findById(req.params.id)
+
+        if(!user){
+            return next(new CustomError("No user found",401))
+        }
+        const imageId = user.photo.id 
+        await cloudinary.uploader.destroy(imageId)
+
+        await user.remove()
 
         res.status(200).json({
-            success: true,
+            success:true,
             message:"User deleted"
         })
     } catch (error) {

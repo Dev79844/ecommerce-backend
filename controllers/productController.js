@@ -65,3 +65,35 @@ exports.getAllProducts = async(req,res,next) => {
         throw error
     }
 }
+
+exports.getProduct = async(req,res,next) => {
+    try {
+        const product = await Product.findById(req.params.id)
+
+        if(!product){
+            return next(new CustomError("No product found",401))
+        }
+
+        res.status(200).json({
+            success:true,
+            product
+        })
+    } catch (error) {
+        throw error
+    }
+}
+
+exports.adminGetAllProducts = async(req,res,next) => {
+    try {
+        
+        const products = await Product.find({})
+
+        res.status(200).json({
+            success: true,
+            products
+        })
+
+    } catch (error) {
+        throw error
+    }
+}

@@ -140,3 +140,95 @@ exports.passwordReset = async(req,res,next) => {
         console.log(error);
     }
 }
+
+exports.getLoggedInUserDetails = async(req,res,next) => {
+    try {
+        const user = await User.findById(req.user.id)
+
+        res.status(200).json({
+            success: true,
+            user
+        })
+    } catch (error) {
+        throw error
+    }
+}
+
+exports.changePassword = async(req,res,next) => {
+    try {
+        const userId = req.user.id
+
+        const user = await User.findById(userId)
+
+        const isCorrectOldPassword = await user.isValidatedPassword(req.body.oldPassword)
+
+        console.log(isCorrectOldPassword);
+
+        if(!isCorrectOldPassword){
+            return next(new Error("old password is incorrect"))
+        }
+
+        user.password = req.body.password 
+        await user.save()
+
+        cookieToken(user,res)
+    } catch (error) {
+        throw error
+    }
+}
+
+exports.updateUserDetails = async(req,res,next) => {
+    try{
+
+        const newData = {
+            name: req.body.name,
+            email: req.body.email
+        }
+
+        if(req.files){
+            const user = await User.findById(req.user.id)
+            const imageId = user.photo.id
+
+            await cloudinary.uploader.destroy(imageId)
+
+            let file = req.files.photo
+            const result = await cloudinary.uploader.upload(file.tempFilePath,{
+                folder: 'users',
+                width: 150,
+                crop: "scale"
+            })
+
+            newData.photo = {
+                id: result.public_id,
+                secure_url: result.secure_url
+            }
+        }
+        
+        const user = await User.findByIdAndUpdate(req.user.id, newData, {
+            new: true,
+            runValidators: true,
+            useFindAndModify: false
+        })
+
+        res.status(200).json({
+            success: true,
+            user
+        })
+
+
+    }catch(error){
+        throw error
+    }
+}
+
+exports.adminAllUsers = async(req,res,next) => {
+    try {
+        const users = await User.find({})
+        res.status(200).json({
+            success:true,
+            users
+        })
+    } catch (error) {
+        throw error
+    }
+}

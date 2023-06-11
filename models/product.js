@@ -72,6 +72,10 @@ const productSchema = new mongoose.Schema({
                     message: 'Please enter a value between 1 to 5'
                 }
             },
+            comment:{
+                type:String,
+                required:true
+            }
 
         }
     ],

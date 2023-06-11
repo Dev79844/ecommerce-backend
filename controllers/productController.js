@@ -97,3 +97,65 @@ exports.adminGetAllProducts = async(req,res,next) => {
         throw error
     }
 }
+
+exports.adminUpdateProduct = async(req,res,next) => {
+    try {
+        const id = req.params.id
+        let product = await Product.findById(id)
+        // console.log(product);
+        if(!product){
+            return next(new CustomError("No product found",401))
+        }
+
+        let imagesArray=[]
+
+        if(req.files){
+            for(let i=0;i<product.photos.length; i++){
+                await cloudinary.uploader.destroy(product.photos[i].id)
+            }
+
+            for(let i=0; i<req.files.photos.length; i++){
+                let result = await cloudinary.uploader.upload(req.files.photos[i].tempFilePath, {
+                    folder:"product"
+                })
+                imagesArray.push({
+                    id: result.public_id,
+                    secure_url: result.secure_url
+                })
+            }
+            req.body.photos = imagesArray
+        }
+
+
+        product = await Product.findByIdAndUpdate(id, req.body, {
+            new: true,
+            useValidators: true,
+            useFindAndModify: false
+        })
+
+    } catch (error) {
+        throw error
+    }
+}
+
+exports.adminDeleteProduct = async(req,res,next) => {
+    try {
+        const product = await Product.findById(req.params.id)
+        if(!product){
+            return next(new CustomError("Product not found",401))
+        }
+
+        for(let i=0; i<product.photos.length; i++){
+            await cloudinary.uploader.destroy(product.photos[i].id)
+        }
+
+        await product.deleteOne()
+
+        res.status(200).json({
+            success:true,
+            message:"Product deleted"
+        })
+    } catch (error) {
+        throw error
+    }
+}
